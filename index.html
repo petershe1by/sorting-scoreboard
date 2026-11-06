@@ -1,0 +1,531 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="校内智能分拣竞赛 V1.1 裁判计分台。逐盒核分、两轮择优与成绩导出。">
+  <meta name="theme-color" content="#102b30">
+  <title>智能分拣 · 裁判计分台</title>
+  <style>
+    :root { color-scheme: light; --ink:#142c2e; --muted:#536c6b; --line:#dbe6e2; --paper:#fff; --wash:#f1f5f2; --green:#006d5d; --dark:#102b30; --mint:#b8f0d5; --radius:17px; font-family:"Microsoft YaHei UI","PingFang SC",system-ui,sans-serif; }
+    * { box-sizing:border-box; }
+    body { margin:0; min-width:300px; background:var(--wash); color:var(--ink); font-size:14px; line-height:1.55; }
+    button,input,select,textarea { font:inherit; }
+    button { cursor:pointer; }
+    button:disabled { cursor:not-allowed; opacity:.52; }
+    :focus-visible { outline:3px solid #2ba892; outline-offset:3px; }
+    [hidden] { display:none !important; }
+    h1,h2,h3,p { margin:0; }
+    .shell { width:min(1340px,calc(100% - 64px)); margin:auto; }
+    header { color:#fff; background:var(--dark); border-bottom:1px solid #315054; }
+    .top { min-height:63px; display:flex; gap:18px; align-items:center; justify-content:space-between; }
+    .brand { display:flex; align-items:center; gap:11px; font-weight:750; letter-spacing:.04em; }
+    .mark { width:33px; height:33px; display:grid; place-items:center; border-radius:10px; color:var(--dark); background:var(--mint); }
+    .tag { display:inline-flex; align-items:center; padding:4px 9px; border:1px solid #3b5a5d; border-radius:100px; color:#cae1df; font-size:11px; white-space:nowrap; letter-spacing:.06em; }
+    .top-actions,.actions { display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+    .top-actions button { border:1px solid #436265; background:transparent; color:#e1f1ed; padding:7px 11px; min-height:36px; }
+    .top-actions button:hover { background:#234248; }
+    .hero { background:var(--dark); color:#fff; }
+    .hero-inner { padding:38px 0 34px; display:flex; align-items:end; justify-content:space-between; gap:24px; }
+    .eyebrow { color:var(--green); letter-spacing:.13em; font-weight:800; font-size:11px; }
+    .hero .eyebrow { color:#9edfc5; }
+    h1 { font-size:clamp(32px,4vw,52px); line-height:1.22; letter-spacing:-.035em; margin:7px 0 9px; }
+    .hero p { color:#b5cbc9; }
+    .hero-stats { display:flex; gap:20px; }
+    .hero-stats div { border-left:1px solid #406166; padding-left:15px; min-width:78px; }
+    .hero-stats strong { font-size:25px; line-height:1.25; font-variant-numeric:tabular-nums; display:block; }
+    .hero-stats span { font-size:11px; color:#b5cbc9; }
+    .tabs { display:flex; gap:6px; border-bottom:1px solid var(--line); padding-top:15px; margin-bottom:22px; }
+    button { border:1px solid transparent; border-radius:9px; padding:9px 13px; min-height:39px; background:#edf4ef; color:var(--ink); font-weight:650; }
+    button:hover { background:#dfede6; }
+    .tabs button { background:transparent; border-radius:0; border-bottom:3px solid transparent; color:var(--muted); padding-inline:16px; }
+    .tabs button[aria-pressed=true] { color:var(--green); border-bottom-color:var(--green); }
+    .primary { background:var(--green); color:#fff; }
+    .primary:hover { background:#00584b; }
+    .ghost { background:#fff; border-color:var(--line); }
+    .layout { display:grid; grid-template-columns:218px minmax(0,1fr) 275px; gap:16px; align-items:start; }
+    .panel { border:1px solid var(--line); border-radius:var(--radius); background:var(--paper); min-width:0; }
+    .pad { padding:20px; }
+    .heading { display:flex; align-items:center; justify-content:space-between; gap:8px; margin-bottom:13px; }
+    h2 { font-size:20px; line-height:1.28; }
+    h3 { font-size:15px; }
+    .sub,.hint { color:var(--muted); font-size:12px; }
+    .roster .pad { padding:16px; }
+    .roster-list { display:grid; gap:6px; max-height:460px; overflow:auto; }
+    .roster-list button { display:flex; align-items:center; gap:8px; justify-content:space-between; width:100%; text-align:left; background:#f5f8f5; overflow-wrap:anywhere; }
+    .roster-list button[aria-pressed=true] { color:#005c4d; background:#ddf3e6; border-color:#91cbb4; }
+    .roster-list small { font-size:10px; color:var(--muted); flex:none; }
+    .roster-empty { padding:12px 0; }
+    .roster-tools { display:grid; grid-template-columns:1fr 1fr; gap:6px; margin-top:12px; }
+    .roster-tools button { padding:6px; font-size:12px; }
+    .status { color:#285b53; background:#e8f4ee; border-radius:100px; padding:3px 9px; font-size:11px; white-space:nowrap; }
+    .rounds,.switch { display:flex; gap:6px; margin-bottom:14px; }
+    .rounds button { flex:1; }
+    .rounds button[aria-pressed=true],.switch button[aria-pressed=true] { background:#dff1e8; border-color:#a2ccb9; color:#005f50; }
+    .rounds small { color:var(--muted); margin-left:5px; font-weight:500; }
+    .divider { border-top:1px solid var(--line); margin:16px 0; }
+    .fields { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:10px; }
+    label.field { display:grid; gap:6px; min-width:0; font-weight:650; }
+    label.field small { font-weight:400; }
+    input,select,textarea { width:100%; color:var(--ink); background:#fbfdfb; border:1px solid #cbdad3; border-radius:8px; min-height:41px; padding:8px 9px; }
+    input[type=number] { font-variant-numeric:tabular-nums; }
+    input[type=checkbox] { width:17px; height:17px; min-height:0; accent-color:var(--green); margin:0; }
+    textarea { resize:vertical; min-height:55px; }
+    .check { display:flex; align-items:center; gap:8px; padding:10px 0; }
+    .round-fields { display:grid; gap:12px; }
+    .form-head { display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap; }
+    .form-head .switch { margin:0; }
+    .boxes { overflow:auto; }
+    table { width:100%; border-collapse:collapse; text-align:left; font-variant-numeric:tabular-nums; }
+    th,td { padding:10px 8px; border-bottom:1px solid var(--line); }
+    th { color:#425d5a; font-size:12px; font-weight:700; background:#f2f7f3; }
+    .boxes table { min-width:505px; }
+    .boxes th,.boxes td { padding:5px; }
+    .boxes td:first-child { font-weight:750; text-align:center; }
+    .boxes input[type=number] { min-width:52px; }
+    .box-state { color:var(--muted); white-space:nowrap; font-size:11px; }
+    .error { background:#fff1ed; color:#8b3321; border:1px solid #efc6b7; border-radius:8px; padding:8px 10px; font-size:13px; }
+    .submit-row { display:flex; flex-wrap:wrap; justify-content:space-between; gap:10px; align-items:center; }
+    .result { padding:17px; }
+    .score-card { background:#123439; color:#fff; border-radius:13px; padding:16px; margin:9px 0 12px; }
+    .score-card .sub { color:#b5d4d0; }
+    .score { font-size:clamp(36px,4vw,50px); font-weight:800; letter-spacing:-.06em; line-height:1.12; font-variant-numeric:tabular-nums; }
+    .score small { font-size:13px; letter-spacing:0; font-weight:500; color:#c2e1d9; }
+    .raw { color:var(--mint); margin-top:4px; font-variant-numeric:tabular-nums; }
+    dl { display:grid; grid-template-columns:1fr auto; gap:8px; margin:12px 0; }
+    dt { color:var(--muted); }
+    dd { margin:0; font-weight:750; font-variant-numeric:tabular-nums; }
+    .best { padding-top:13px; border-top:1px solid var(--line); }
+    .notice { min-height:1.6em; font-size:12px; color:var(--muted); margin-top:12px; }
+    .results-head { display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap; }
+    .rank-wrap { overflow:auto; margin-top:16px; }
+    .rank-wrap table { min-width:740px; }
+    .rank-wrap td:nth-child(2) { min-width:125px; max-width:240px; overflow-wrap:anywhere; }
+    .rank-number { font-weight:800; color:#006551; }
+    .text-button { padding:0; min-height:0; background:transparent; text-align:left; color:#005d4f; overflow-wrap:anywhere; }
+    .text-button:hover { background:transparent; text-decoration:underline; }
+    .empty { text-align:center; padding:30px 10px; color:var(--muted); }
+    .foot { color:var(--muted); margin:20px 0 22px; font-size:12px; }
+    details summary { cursor:pointer; width:fit-content; font-weight:650; }
+    details p { margin-top:6px; }
+    dialog { width:min(440px,calc(100% - 28px)); border:1px solid var(--line); border-radius:16px; padding:20px; color:var(--ink); box-shadow:0 24px 70px #102b304d; }
+    dialog::backdrop { background:#102b3077; }
+    dialog form { display:grid; gap:14px; }
+    dialog .actions { justify-content:end; }
+    @media(max-width:1080px) { .layout { grid-template-columns:180px minmax(0,1fr); } .result { grid-column:2; } .shell { width:calc(100% - 36px); } }
+    @media(max-width:680px) { .shell { width:calc(100% - 24px); } .top { min-height:54px; gap:6px; } .brand { font-size:12px; letter-spacing:0; gap:6px; } .mark { width:25px; height:25px; } .top-actions { gap:3px; } .top-actions button { padding:5px; min-height:32px; font-size:11px; } .top .tag { display:none; } .hero-inner { padding:24px 0; display:block; } .hero-stats { margin-top:17px; } .hero p { font-size:12px; } .layout { grid-template-columns:1fr; } .result { grid-column:auto; } .roster-list { max-height:124px; } .pad { padding:14px; } .fields { gap:7px; } .fields label { font-size:12px; } }
+    @media print { header,.hero,.tabs,.foot,#entry,.notice,.results-head .actions { display:none !important; } body,.panel { background:#fff; } .shell { width:100%; } #rank[hidden] { display:block !important; } .rank-wrap { overflow:visible; } .rank-wrap table { min-width:0; } }
+  </style>
+</head>
+<body>
+  <header><div class="shell top">
+    <div class="brand"><span class="mark" aria-hidden="true"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="4" y="4" width="6" height="6" rx="1"/><rect x="14" y="4" width="6" height="6" rx="1"/><rect x="4" y="14" width="6" height="6" rx="1"/><path d="m14 17 2 2 4-5"/></svg></span> 智能分拣 <span class="tag">校赛 V1.1</span></div>
+    <div class="top-actions"><button id="backup">备份 JSON</button><button id="restore">导入备份</button><input id="backup-file" type="file" accept=".json,application/json" hidden></div>
+  </div></header>
+  <div class="hero"><div class="shell hero-inner">
+    <div><div class="eyebrow">校内智能分拣竞赛</div><h1>裁判计分台</h1><p>现场录分、两轮择优和排名复核</p></div>
+    <div class="hero-stats"><div><strong id="team-count">0</strong><span>已登记队伍</span></div><div><strong id="settled-count">0</strong><span>已结算轮次</span></div><div><strong>84</strong><span>单轮原始满分</span></div></div>
+  </div></div>
+  <main class="shell">
+    <nav class="tabs" aria-label="工作区"><button id="show-entry" aria-pressed="true">现场计分</button><button id="show-rank" aria-pressed="false">成绩榜</button></nav>
+    <div id="entry" class="layout">
+      <aside class="panel roster"><div class="pad">
+        <div class="heading"><h3>队伍名单</h3><button id="add-team" class="ghost">＋ 新增</button></div>
+        <div id="roster" class="roster-list"></div>
+        <div id="team-tools" class="roster-tools" hidden><button id="rename-team" class="ghost">修改队名</button><button id="dq-team" class="ghost">取消资格</button></div>
+      </div></aside>
+      <section class="panel pad" aria-labelledby="entry-title">
+        <div class="heading"><div><div class="eyebrow">轮次录入</div><h2 id="entry-title">临时核算</h2></div><span id="round-tag" class="status">未保存</span></div>
+        <div class="rounds" id="rounds" aria-label="选择轮次"></div>
+        <form id="score-form" novalidate>
+          <div class="round-fields">
+            <label class="field">本轮状态<select id="round-status"><option value="run">按现场结果结算</option><option value="absent">缺席或放弃本轮</option><option value="zero">判罚本轮 0 分</option></select></label>
+            <div id="score-fields" class="round-fields">
+              <div class="form-head"><div class="switch" aria-label="录入方式"><button type="button" id="quick" aria-pressed="true">快速汇总</button><button type="button" id="by-box" aria-pressed="false">逐盒核分</button></div><button type="button" id="example" class="ghost">填入规则算例</button></div>
+              <div id="quick-fields" class="fields">
+                <label class="field">单件主盒数<input id="singles" type="number" min="0" max="6" step="1" inputmode="numeric"><small class="hint">每盒 2 分</small></label>
+                <label class="field">两件主盒数<input id="pairs" type="number" min="0" max="6" step="1" inputmode="numeric"><small class="hint">每盒 10 分</small></label>
+                <label class="field">合格显示条数<input id="displays" type="number" min="0" max="12" step="1" inputmode="numeric"><small class="hint">只数主盒合格件</small></label>
+              </div>
+              <p id="quick-hint" class="hint">按终局核验结果填入。同类只认一个主盒，混装盒和非主盒跳过。</p>
+              <div id="box-fields" class="boxes" hidden><table><thead><tr><th>盒号</th><th>真实模型</th><th>颜色</th><th>合格件</th><th>合格显示</th><th>混装</th><th>判定</th></tr></thead><tbody id="box-body"></tbody></table></div>
+              <p id="box-hint" class="hint" hidden>部分入盒的异类也要勾混装。同类拆盒按合格件数择主盒，件数相同取小盒号。</p>
+              <div id="finish-fields" hidden><label class="check"><input id="completed" type="checkbox">全部完成且装置已进入静止待机</label><label class="field" id="time-field" hidden>完成用时（秒）<input id="seconds" type="number" min="0.1" max="180" step="0.1" inputmode="decimal" placeholder="例如 132.5"></label></div>
+              <p class="hint" id="time-hint">未完整完成时，排名用时按 180.0 秒计算。</p>
+            </div>
+            <label class="field"><span id="note-label">裁判备注（选填）</span><textarea id="note" maxlength="240" rows="2" placeholder="记录终止原因或复核说明"></textarea></label>
+            <p id="form-error" class="error" role="alert" hidden></p>
+          </div>
+          <div class="divider"></div>
+          <div class="submit-row"><span class="hint" id="draft-hint">预览随录入更新，保存后纳入排名。</span><button class="primary" id="save-round" type="submit">添加队伍并保存</button></div>
+        </form>
+      </section>
+      <aside class="panel result" aria-labelledby="result-title">
+        <div class="eyebrow">当前轮</div><h2 id="result-title">得分预览</h2>
+        <div class="score-card"><div class="sub">百分制成绩</div><div class="score"><span id="percent">0.00</span> <small>/ 100</small></div><div class="raw" id="raw">原始分 0 / 84</div></div>
+        <dl><dt>归盒分 S</dt><dd id="res-s">0</dd><dt>显示分 2 × M</dt><dd id="res-m">0</dd><dt>主盒合格件 N</dt><dd id="res-n">0</dd><dt>排名用时 T</dt><dd id="res-t">180.0 秒</dd></dl>
+        <div class="best"><h3>已保存的较好轮</h3><p class="sub" id="best">保存后显示</p></div>
+      </aside>
+    </div>
+    <section id="rank" class="panel pad" aria-labelledby="rank-title" hidden>
+      <div class="results-head"><div><div class="eyebrow">两轮择优</div><h2 id="rank-title">队伍成绩榜</h2><p class="sub">先比较较好轮，再比较另一轮。两轮数据相同则并列。</p></div><div class="actions"><button id="print" class="ghost">打印</button><button id="csv" class="primary">导出 CSV</button></div></div>
+      <div class="rank-wrap"><table><thead><tr><th>名次</th><th>队伍</th><th>第一轮原始分</th><th>第二轮原始分</th><th>较好轮</th><th>有效原始分</th><th>百分制</th><th>排名用时</th><th>状态</th></tr></thead><tbody id="rank-body"></tbody></table></div>
+    </section>
+    <p class="notice" id="notice" role="status"></p>
+    <footer class="foot"><details><summary>计分和数据说明</summary><p>单件主盒 2 分，两件主盒 10 分。主盒内每条合格显示 2 分。百分制为原始分 ÷ 84 × 100。同分依次比较归盒分、合格件数和用时。</p><p>记录保存在当前浏览器。更换设备前请导出 JSON 备份。CSV 用于查看和归档。</p></details></footer>
+  </main>
+  <dialog id="team-dialog"><form id="team-form"><h2 id="dialog-title">新增队伍</h2><label class="field">队名或编号<input id="team-name" maxlength="48" required autocomplete="off"></label><p id="team-error" class="error" hidden></p><div class="actions"><button type="button" id="cancel-team" class="ghost">取消</button><button type="submit" class="primary">确认</button></div></form></dialog>
+
+  <script id="scoring-engine">
+    const Scoring = (() => {
+      const LIMIT = 1800;
+      const EMPTY = Object.freeze({ R:0, S:0, M:0, N:0, T:LIMIT, percent:'0.00', boxes:[] });
+      const MODELS = ['A01 正方体','A02 长方体','A03 圆柱体','A04 球体','A05 圆锥体','A06 正四面体','A07 正四棱锥','A08 正五棱锥','A09 正六棱锥','A10 三棱柱','A11 五棱柱','A12 六棱柱','B01 薄壁正方体','B02 薄壁长方体','B03 薄壁圆柱','B04 薄壁六棱柱','E01 镂空正方体','E02 镂空长方体','E03 镂空三棱柱','E04 镂空五棱柱','E05 镂空六棱柱','E06 镂空八棱柱','E07 镂空正四面体','E08 镂空四棱锥','E09 镂空五棱锥','E10 镂空六棱锥','E11 镂空八棱锥','E12 镂空四棱台','E13 镂空六棱台','E14 镂空正八面体','E15 镂空菱形十二面体','E16 镂空圆柱','E17 镂空圆锥','E18 镂空圆台','E19 镂空五角双棱锥','E20 镂空六角双棱锥'];
+      const COLORS = ['红','蓝','黄','绿'];
+      const codes = new Set(MODELS.map(model => model.slice(0,3)));
+      const invalid = message => { throw new Error(message); };
+      const fresh = () => ({ status:'run', mode:'quick', singles:0, pairs:0, displays:0, completed:false, seconds:'', note:'', boxes:Array.from({length:6}, () => ({model:'', color:'', count:0, displays:0, mixed:false})) });
+      const whole = (n,max,name) => {
+        if (!Number.isInteger(n) || n < 0 || n > max) invalid(`${name}须为 0 到 ${max} 的整数。`);
+        return n;
+      };
+      function scoreBoxes(boxes) {
+        if (!Array.isArray(boxes) || boxes.length !== 6) invalid('逐盒录入需要六个储物盒。');
+        const groups = new Map();
+        const outcomes = Array.from({length:6}, () => '空盒或无合格件');
+        boxes.forEach((box, index) => {
+          if (!box || typeof box.mixed !== 'boolean') invalid('储物盒记录格式有误。');
+          if (box.mixed) { outcomes[index] = '混装 0 分'; return; }
+          const label = `${index + 1}号盒`;
+          const n = whole(box.count,2,`${label}合格件数`);
+          const m = whole(box.displays,n,`${label}合格显示条数`);
+          if (n === 0) return;
+          if (!codes.has(box.model) || !COLORS.includes(box.color)) invalid(`${label}需要选择真实模型和颜色。`);
+          const key = `${box.model} ${box.color}`;
+          const group = groups.get(key) ?? [];
+          group.push({index,n,m});
+          groups.set(key, group);
+        });
+        let S=0, N=0, M=0;
+        for (const [key, group] of groups) {
+          if (group.reduce((sum, box) => sum + box.n, 0) > 2) invalid(`${key}合格件数超过每类 2 件，请核对。`);
+          group.sort((a,b) => b.n - a.n || a.index - b.index);
+          const [main,...rest] = group;
+          const points = main.n === 2 ? 10 : 2;
+          S += points; N += main.n; M += main.m;
+          outcomes[main.index] = `主盒 ${points} 分`;
+          rest.forEach(box => { outcomes[box.index] = '非主盒 0 分'; });
+        }
+        return { S,N,M,boxes:outcomes };
+      }
+      function score(round) {
+        if (!round) return EMPTY;
+        if (!['run','absent','zero'].includes(round.status)) invalid('本轮状态无效。');
+        if (round.status !== 'run') return EMPTY;
+        let result;
+        if (round.mode === 'boxes') result = scoreBoxes(round.boxes);
+        else if (round.mode === 'quick') {
+          const singles = whole(round.singles,6,'单件主盒数');
+          const pairs = whole(round.pairs,6,'两件主盒数');
+          if (singles + pairs > 6) invalid('主盒总数不能超过 6 个。');
+          const N = singles + 2*pairs;
+          result = { S:2*singles + 10*pairs, N, M:whole(round.displays,N,'合格显示条数'), boxes:[] };
+        } else invalid('录入方式无效。');
+        const R = result.S + 2*result.M;
+        let T = LIMIT;
+        if (round.completed) {
+          if (R !== 84) invalid('完整完成须为 12 件正确归盒且 12 条显示合格。');
+          if (!/^\d+(?:\.\d)?$/.test(String(round.seconds))) invalid('请输入完成用时，最多一位小数。');
+          T = Math.round(Number(round.seconds)*10);
+          if (T < 1 || T > LIMIT) invalid('完成用时须在 0.1 至 180.0 秒内。');
+        }
+        return {...result,R,T,percent:(100*R/84).toFixed(2)};
+      }
+      const compare = (a,b) => b.R-a.R || b.S-a.S || b.N-a.N || a.T-b.T;
+      function outcome(team) {
+        const [first,second] = team.rounds.map(score);
+        const bestIndex = !team.rounds[0] && team.rounds[1] ? 1 : compare(first,second) > 0 ? 1 : 0;
+        const scores = [first,second];
+        return {...team,scores,bestIndex,best:scores[bestIndex],other:scores[1-bestIndex],started:team.rounds.some(Boolean),final:team.rounds.every(Boolean)};
+      }
+      const compareTeams = (a,b) => compare(a.best,b.best) || compare(a.other,b.other);
+      function rank(teams) {
+        const scored = teams.map(outcome);
+        const sorted = scored.filter(team => team.started && !team.disqualified).sort(compareTeams);
+        sorted.forEach((team,i) => { team.rank = i && compareTeams(team,sorted[i-1]) === 0 ? sorted[i-1].rank : i+1; });
+        return [...sorted,...scored.filter(team => !team.started || team.disqualified)];
+      }
+      return { EMPTY,MODELS,COLORS,fresh,score,outcome,rank };
+    })();
+  </script>
+  <script>
+    'use strict';
+    const $ = id => document.getElementById(id);
+    const STORE_KEY = 'sorting-scoreboard-v1.1';
+    const zeroReasons = { run:'已结算', absent:'缺席／放弃', zero:'判罚 0 分' };
+    const drafts = new Map();
+    let teams = [], selected = null, roundIndex = 0, draft = Scoring.fresh();
+    let stored = null, storageAvailable = true, dialogMode = 'add';
+
+    function cleanBackup(data) {
+      if (!data || data.schema !== 1 || !Array.isArray(data.teams) || data.teams.length > 500) throw new Error('备份格式无效。');
+      const ids = new Set(), names = new Set();
+      return data.teams.map(team => {
+        if (!team || typeof team.id !== 'string' || !/^[a-z0-9-]{1,64}$/i.test(team.id) || ids.has(team.id) || typeof team.name !== 'string' || !team.name.trim() || team.name.length > 48 || names.has(team.name.trim()) || !Array.isArray(team.rounds) || team.rounds.length !== 2 || typeof team.disqualified !== 'boolean') throw new Error('备份中有无效或重复的队伍。');
+        ids.add(team.id); names.add(team.name.trim());
+        const rounds = team.rounds.map(round => {
+          if (round === null) return null;
+          if (!round || !['run','absent','zero'].includes(round.status) || typeof round.completed !== 'boolean' || typeof round.note !== 'string' || round.note.length > 240) throw new Error('备份中有无效的轮次记录。');
+          const cleaned = {...Scoring.fresh(), status:round.status, note:round.note};
+          if (round.status === 'zero' && !round.note.trim()) throw new Error('判罚 0 分须填写原因。');
+          if (round.status === 'run') {
+            const {mode,singles,pairs,displays,completed,seconds} = round;
+            Object.assign(cleaned,{mode,singles,pairs,displays,completed,seconds:String(seconds ?? '')});
+            if (mode === 'boxes') {
+              if (!Array.isArray(round.boxes) || round.boxes.length !== 6) throw new Error('逐盒记录须包含六个盒子。');
+              cleaned.boxes = round.boxes.map(box => {
+                if (!box || typeof box.model !== 'string' || typeof box.color !== 'string' || typeof box.mixed !== 'boolean') throw new Error('备份中有无效的储物盒。');
+                return {model:box.model,color:box.color,count:box.count,displays:box.displays,mixed:box.mixed};
+              });
+            }
+          }
+          Scoring.score(cleaned);
+          return cleaned;
+        });
+        return {id:team.id,name:team.name.trim(),rounds,disqualified:team.disqualified};
+      });
+    }
+    function notify(message) { $('notice').textContent = message; }
+    try {
+      stored = localStorage.getItem(STORE_KEY);
+    } catch { storageAvailable = false; }
+    if (stored) {
+      try { teams = cleanBackup(JSON.parse(stored)); }
+      catch { storageAvailable = false; notify('现有浏览器记录无法读取。可导入有效备份，本次结果请另存 JSON。'); }
+    }
+    if (!storageAvailable && !$('notice').textContent) notify('当前浏览器无法本地保存。可在本次页面使用，离开前请导出 JSON。');
+
+    function persist(next) {
+      if (storageAvailable) {
+        try {
+          if (localStorage.getItem(STORE_KEY) !== stored) { notify('其他页面已更新记录，请刷新后再保存。'); return false; }
+          const value = JSON.stringify({schema:1,teams:next});
+          localStorage.setItem(STORE_KEY,value);
+          stored = value;
+        } catch { storageAvailable = false; }
+      }
+      teams = next;
+      return true;
+    }
+    const selectedTeam = () => teams.find(team => team.id === selected);
+    const draftKey = () => `${selected ?? 'temporary'}:${roundIndex}`;
+    const duplicate = value => JSON.parse(JSON.stringify(value));
+    const timeText = result => `${(result.T/10).toFixed(1)} 秒`;
+    const node = (tag,value,cls) => { const el = document.createElement(tag); el.textContent = value; if (cls) el.className = cls; return el; };
+    function option(value,label) { const item = node('option',label); item.value = value; return item; }
+
+    function renderRoster() {
+      $('team-count').textContent = teams.length;
+      $('settled-count').textContent = teams.reduce((sum,team) => sum + team.rounds.filter(Boolean).length,0);
+      const list = $('roster'); list.replaceChildren();
+      if (!teams.length) list.append(node('p','可先试算，保存时再添加队伍。','sub roster-empty'));
+      teams.forEach(team => {
+        const button = node('button',''); button.type = 'button'; button.setAttribute('aria-pressed',String(team.id === selected));
+        button.append(node('span',team.name),node('small',team.disqualified ? '取消资格' : `${team.rounds.filter(Boolean).length}/2`));
+        button.onclick = () => openTeam(team.id,team.rounds[0] && !team.rounds[1] ? 1 : 0);
+        list.append(button);
+      });
+      const team = selectedTeam();
+      $('team-tools').hidden = !team;
+      $('dq-team').textContent = team?.disqualified ? '恢复资格' : '取消资格';
+    }
+    function openTeam(id,index) {
+      selected = id; roundIndex = index;
+      draft = duplicate(drafts.get(draftKey()) ?? selectedTeam()?.rounds[index] ?? Scoring.fresh());
+      show('entry'); renderEditor(); renderRoster();
+    }
+    function renderBoxes() {
+      const table = $('box-body'); table.replaceChildren();
+      draft.boxes.forEach((box,i) => {
+        const row = document.createElement('tr');
+        row.append(node('td',String(i+1)));
+        const select = (key,title,options) => {
+          const input = document.createElement('select'); input.setAttribute('aria-label',`${i+1}号盒${title}`);
+          input.append(option('','请选择'), ...options.map(([value,label]) => option(value,label)));
+          input.value = box[key]; input.disabled = box.mixed;
+          input.oninput = () => { box[key] = input.value; updatePreview(); };
+          row.insertCell().append(input);
+        };
+        select('model','真实模型',Scoring.MODELS.map(model => [model.slice(0,3),model]));
+        select('color','颜色',Scoring.COLORS.map(color => [color,`${color}色`]));
+        for (const [key,title] of [['count','合格件数'],['displays','合格显示']]) {
+          const input = document.createElement('input'); input.type = 'number'; input.min = '0'; input.max = '2'; input.step = '1'; input.inputMode = 'numeric'; input.value = box[key]; input.disabled = box.mixed;
+          input.setAttribute('aria-label',`${i+1}号盒${title}`);
+          input.oninput = () => { box[key] = readNumber(input); updatePreview(); };
+          row.insertCell().append(input);
+        }
+        const mixed = document.createElement('input'); mixed.type = 'checkbox'; mixed.checked = box.mixed;
+        mixed.setAttribute('aria-label',`${i+1}号盒混装`);
+        mixed.oninput = () => { box.mixed = mixed.checked; row.querySelectorAll('select,input[type=number]').forEach(input => { input.disabled = box.mixed; }); updatePreview(); };
+        row.insertCell().append(mixed);
+        const status = row.insertCell(); status.className = 'box-state'; status.id = `box-outcome-${i}`;
+        table.append(row);
+      });
+    }
+    const readNumber = input => input.validity.badInput ? -1 : input.value === '' ? 0 : Number(input.value);
+    function renderEditor() {
+      const team = selectedTeam();
+      $('entry-title').textContent = team?.name ?? '临时核算';
+      $('rounds').replaceChildren(...[0,1].map(index => {
+        const btn = node('button',`第 ${index+1} 轮`); btn.type='button'; btn.setAttribute('aria-pressed',String(index===roundIndex));
+        btn.append(node('small',team?.rounds[index] ? zeroReasons[team.rounds[index].status] : '待录入'));
+        btn.onclick = () => openTeam(selected,index); return btn;
+      }));
+      $('round-status').value = draft.status;
+      for (const key of ['singles','pairs','displays','seconds','note']) $(key).value = draft[key];
+      $('completed').checked = draft.completed;
+      $('quick').setAttribute('aria-pressed',String(draft.mode === 'quick'));
+      $('by-box').setAttribute('aria-pressed',String(draft.mode === 'boxes'));
+      $('quick-fields').hidden = $('quick-hint').hidden = draft.mode !== 'quick';
+      $('box-fields').hidden = $('box-hint').hidden = draft.mode !== 'boxes';
+      $('example').hidden = draft.mode !== 'quick';
+      if (draft.mode === 'boxes') renderBoxes();
+      $('save-round').textContent = team ? '保存本轮' : '添加队伍并保存';
+      updatePreview(false);
+    }
+    function updatePreview(markDirty = true) {
+      const active = draft.status === 'run';
+      $('score-fields').hidden = !active;
+      $('note-label').textContent = draft.status === 'zero' ? '判罚原因（必填）' : '裁判备注（选填）';
+      let result, message = '';
+      try {
+        const base = Scoring.score({...draft,completed:false});
+        $('finish-fields').hidden = !active || base.R !== 84;
+        if (base.R !== 84 && draft.completed) { draft.completed = false; $('completed').checked = false; }
+        result = Scoring.score(draft);
+      } catch (error) { message = error.message; }
+      $('time-field').hidden = !draft.completed;
+      $('time-hint').hidden = draft.completed;
+      if (draft.status === 'zero' && !draft.note.trim()) message = '请填写本轮判罚原因。';
+      if (markDirty) drafts.set(draftKey(),duplicate(draft));
+      const team = selectedTeam();
+      const dirty = drafts.has(draftKey());
+      $('round-tag').textContent = team?.disqualified ? '取消资格' : dirty ? '待保存' : team?.rounds[roundIndex] ? '已保存' : '待录入';
+      $('form-error').textContent = message; $('form-error').hidden = !message;
+      $('save-round').disabled = !!message;
+      $('percent').textContent = result?.percent ?? '—';
+      $('raw').textContent = result ? `原始分 ${result.R} / 84` : '请核对录入';
+      $('res-s').textContent = result?.S ?? '—'; $('res-m').textContent = result ? result.M*2 : '—';
+      $('res-n').textContent = result?.N ?? '—'; $('res-t').textContent = result ? timeText(result) : '—';
+      draft.boxes.forEach((_,i) => { const cell = $(`box-outcome-${i}`); if (cell) cell.textContent = result?.boxes[i] ?? '—'; });
+      const out = team && Scoring.outcome(team);
+      $('best').textContent = out?.disqualified ? '取消资格，不列入排名' : out?.started ? `第 ${out.bestIndex+1} 轮 · ${out.best.percent} 分${out.final ? '' : '（暂定）'}` : '保存后显示';
+    }
+    function setMode(mode) {
+      if (draft.mode === mode) return;
+      draft.mode = mode; drafts.set(draftKey(),duplicate(draft)); renderEditor();
+    }
+    function saveRound() {
+      const team = selectedTeam();
+      if (!team) { openDialog('addAndSave'); return; }
+      const saved = duplicate(draft);
+      const next = teams.map(item => item.id === team.id ? {...item,rounds:item.rounds.map((round,i) => i===roundIndex ? saved : round)} : item);
+      if (!persist(next)) return;
+      drafts.delete(draftKey()); renderRoster(); renderEditor();
+      notify(storageAvailable ? `${team.name}第 ${roundIndex+1} 轮已保存。` : '本轮已记录在当前页面，请导出 JSON 备份。');
+    }
+    function openDialog(mode) {
+      dialogMode = mode; $('dialog-title').textContent = mode === 'rename' ? '修改队名' : '新增队伍';
+      $('team-name').value = mode === 'rename' ? selectedTeam().name : '';
+      $('team-error').hidden = true;
+      $('team-dialog').showModal(); $('team-name').focus();
+    }
+    function renderRank() {
+      const tbody = $('rank-body'); tbody.replaceChildren();
+      const rows = Scoring.rank(teams);
+      if (!rows.length) {
+        const row = tbody.insertRow(); const cell = row.insertCell(); cell.colSpan = 9; cell.className = 'empty'; cell.textContent = '还没有队伍。请在现场计分中添加。'; return;
+      }
+      rows.forEach(team => {
+        const row = tbody.insertRow();
+        row.append(node('td',team.rank ?? '—','rank-number'));
+        const name = node('button',team.name,'text-button'); name.onclick = () => openTeam(team.id,team.bestIndex); row.insertCell().append(name);
+        team.rounds.forEach((round,i) => row.append(node('td',round ? team.scores[i].R : '待录入')));
+        const valid = team.started && !team.disqualified;
+        for (const v of [valid ? `第 ${team.bestIndex+1} 轮` : '—',valid ? team.best.R : '—',valid ? team.best.percent : '—',valid ? timeText(team.best) : '—',team.disqualified ? '取消资格' : team.final ? '已结算' : team.started ? '暂定' : '待录入']) row.append(node('td',v));
+      });
+    }
+    function show(view) {
+      $('entry').hidden = view !== 'entry'; $('rank').hidden = view !== 'rank';
+      $('show-entry').setAttribute('aria-pressed',String(view==='entry')); $('show-rank').setAttribute('aria-pressed',String(view==='rank'));
+      if (view === 'rank') renderRank();
+    }
+    function download(name,contents,type) {
+      const url = URL.createObjectURL(new Blob([contents],{type})); const a = document.createElement('a'); a.href = url; a.download = name; document.body.append(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(url),3000);
+    }
+    function csvCell(value) {
+      let text = String(value ?? '');
+      if (/^\s*[=+\-@]/.test(text) || /^[\r\n\t]/.test(text)) text = `'${text}`;
+      return `"${text.replaceAll('"','""')}"`;
+    }
+    $('csv').onclick = () => {
+      const roundHeaders = n => ['状态','原始分','归盒分','显示条数','合格件','排名用时','备注'].map(title => `第${n}轮${title}`);
+      const rows = [['名次','队伍','状态','较好轮','百分制',...roundHeaders(1),...roundHeaders(2)]];
+      for (const team of Scoring.rank(teams)) {
+        const fields = (round,i) => round ? [zeroReasons[round.status],team.scores[i].R,team.scores[i].S,team.scores[i].M,team.scores[i].N,(team.scores[i].T/10).toFixed(1),round.note] : ['待录入','','','','','',''];
+        const valid = team.started && !team.disqualified;
+        rows.push([team.rank,team.name,team.disqualified ? '取消资格' : team.final ? '已结算' : team.started ? '暂定' : '待录入',valid ? team.bestIndex+1 : '',valid ? team.best.percent : '',...team.rounds.flatMap(fields)]);
+      }
+      download('智能分拣成绩.csv','\ufeff'+rows.map(row => row.map(csvCell).join(',')).join('\r\n'),'text/csv;charset=utf-8');
+    };
+    $('backup').onclick = () => download('智能分拣计分备份.json',JSON.stringify({schema:1,teams},null,2),'application/json');
+    $('restore').onclick = () => $('backup-file').click();
+    $('backup-file').onchange = async event => {
+      const file = event.target.files[0]; event.target.value = ''; if (!file) return;
+      try {
+        if (file.size > 1_000_000) throw new Error('备份文件超过 1 MB。');
+        const imported = cleanBackup(JSON.parse(await file.text()));
+        if ((teams.length || drafts.size) && !confirm(`用备份中的 ${imported.length} 支队伍替换当前记录？`)) return;
+        if (!persist(imported)) return;
+        drafts.clear(); openTeam(teams[0]?.id ?? null,0); notify(`已导入 ${teams.length} 支队伍。${storageAvailable ? '' : '当前浏览器不可保存，请保留备份。'}`);
+      } catch (error) { notify(`导入失败。${error.message}`); }
+    };
+    $('team-form').onsubmit = event => {
+      event.preventDefault(); const name = $('team-name').value.trim(); const current = selectedTeam();
+      if (!name || teams.some(team => team.name === name && (dialogMode !== 'rename' || team.id !== selected)) || (dialogMode !== 'rename' && teams.length >= 500)) {
+        $('team-error').textContent = !name ? '请输入队名或编号。' : teams.length >= 500 && dialogMode !== 'rename' ? '最多可登记 500 支队伍。' : '队名或编号已存在。'; $('team-error').hidden = false; return;
+      }
+      if (dialogMode === 'rename') {
+        if (!persist(teams.map(team => team.id === current.id ? {...team,name} : team))) return;
+        $('team-dialog').close(); renderRoster(); renderEditor(); return;
+      }
+      const newTeam = {id:globalThis.crypto?.randomUUID?.() ?? `${Date.now()}-${Math.random().toString(36).slice(2)}`,name,rounds:[null,null],disqualified:false};
+      const saveImmediately = dialogMode === 'addAndSave';
+      if (saveImmediately) newTeam.rounds[roundIndex] = duplicate(draft);
+      if (!persist([...teams,newTeam])) return;
+      $('team-dialog').close();
+      if (saveImmediately) drafts.delete(draftKey());
+      openTeam(newTeam.id,saveImmediately ? roundIndex : 0);
+      notify(saveImmediately ? `${name}第 ${roundIndex+1} 轮已记录。` : `已添加 ${name}。`);
+    };
+    $('cancel-team').onclick = () => $('team-dialog').close();
+    $('add-team').onclick = () => openDialog('add');
+    $('rename-team').onclick = () => openDialog('rename');
+    $('dq-team').onclick = () => {
+      const team = selectedTeam(); const disqualified = !team.disqualified;
+      if (!confirm(`${disqualified ? '取消' : '恢复'} ${team.name} 的比赛资格？`)) return;
+      if (!persist(teams.map(item => item.id===team.id ? {...item,disqualified} : item))) return;
+      renderRoster(); renderEditor(); notify(`${team.name}资格已更新。`);
+    };
+    $('score-form').onsubmit = event => { event.preventDefault(); if (!$('save-round').disabled) saveRound(); };
+    $('round-status').oninput = () => { draft.status = $('round-status').value; updatePreview(); };
+    for (const key of ['singles','pairs','displays']) $(key).oninput = () => { draft[key] = readNumber($(key)); updatePreview(); };
+    for (const key of ['seconds','note']) $(key).oninput = () => { draft[key] = $(key).value; updatePreview(); };
+    $('completed').oninput = () => { draft.completed = $('completed').checked; updatePreview(); };
+    $('quick').onclick = () => setMode('quick'); $('by-box').onclick = () => setMode('boxes');
+    $('example').onclick = () => { Object.assign(draft,{singles:1,pairs:4,displays:8,completed:false}); drafts.set(draftKey(),duplicate(draft)); renderEditor(); };
+    $('show-entry').onclick = () => show('entry'); $('show-rank').onclick = () => show('rank'); $('print').onclick = () => window.print();
+    openTeam(teams[0]?.id ?? null,0);
+  </script>
+</body>
+</html>
